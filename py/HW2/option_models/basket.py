@@ -6,8 +6,7 @@ Created on Tue Sep 19 22:56:58 2017
 """
 import numpy as np
 import scipy.stats as ss
-from .bsm import bsm_formula
-from .normal import normal_formula
+import pyfeng as pf
 
 def basket_check_args(spot, vol, corr_m, weights):
     '''
@@ -58,7 +57,11 @@ def basket_price_mc_cv(
 
 def basket_price_mc(
     strike, spot, vol, weights, texp, cor_m,
+<<<<<<< HEAD
     intr=0.0, divr=0.0, cp=1, bsm=True, n_samples = 10000
+=======
+    intr=0.0, divr=0.0, cp=1, bsm=True, n_samples = 100000
+>>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
 ):
     basket_check_args(spot, vol, cor_m, weights)
     
@@ -67,7 +70,7 @@ def basket_price_mc(
     forward = spot / disc_fac * div_fac
 
     cov_m = vol * cor_m * vol[:,None]
-    chol_m = np.linalg.cholesky(cov_m)
+    chol_m = np.linalg.cholesky(cov_m)  # L matrix in slides
 
     n_assets = spot.size
     znorm_m = np.random.normal(size=(n_assets, n_samples))
@@ -76,8 +79,12 @@ def basket_price_mc(
         '''
         PUT the simulation of the geometric brownian motion below
         '''
+<<<<<<< HEAD
         #prices = forward[:,None]*np.exp(-1/2*vol[:,None]**2*texp + vol[:,None] * (np.sqrt(texp)*chol_m @ znorm_m))
         prices = forward[:,None]*np.exp(-1/2*vol[:,None]**2*texp +  (np.sqrt(texp)*chol_m @ znorm_m))
+=======
+        prices = np.zeros_like(znorm_m)
+>>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
     else:
         # bsm = False: normal model
         prices = forward[:,None] + np.sqrt(texp) * chol_m @ znorm_m
@@ -99,13 +106,20 @@ def basket_price_norm_analytic(
     1. compute the forward of the basket
     2. compute the normal volatility of basket
     3. plug in the forward and volatility to the normal price formula
+<<<<<<< HEAD
     normal_formula(strike, spot, vol, texp, intr=0.0, divr=0.0, cp=1)
     it is already imorted
+=======
+    
+    norm = pf.Norm(sigma, intr=intr, divr=divr)
+    norm.price(strike, spot, texp, cp=cp)
+>>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
     
     PUT YOUR CODE BELOW
     '''
     basket_check_args(spot, vol, cor_m, weights)
     
+<<<<<<< HEAD
     div_fac = np.exp(-texp*divr)
     disc_fac = np.exp(-texp*intr)
     forward = spot / disc_fac * div_fac
@@ -126,3 +140,8 @@ def spread_price_kirk(strike, spot, vol, texp, corr, intr=0, divr=0, cp=1):
     price = disc_fac * bsm_formula(forward[1]+strike, forward[0], vol_r, texp, cp=cp)
 
     return price
+=======
+    
+    
+    return 0.0
+>>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69

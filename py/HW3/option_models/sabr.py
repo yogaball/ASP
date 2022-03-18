@@ -10,7 +10,10 @@ import scipy.stats as ss
 import scipy.optimize as sopt
 from . import normal
 from . import bsm
+<<<<<<< HEAD
 
+=======
+>>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
 import pyfeng as pf
 
 '''
@@ -145,8 +148,11 @@ class ModelNormalMC:
         for i in range(len(price_in)):
             impvol_m.append(normal_model.impvol(price_in[i], strike[i], spot, texp))
         
+<<<<<<< HEAD
         return impvol_m
         
+=======
+>>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
     def price(self, strike, spot, texp=None, sigma=None, cp=1):
         '''
         Your MC routine goes here
