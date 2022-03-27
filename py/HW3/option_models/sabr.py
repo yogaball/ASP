@@ -10,11 +10,8 @@ import scipy.stats as ss
 import scipy.optimize as sopt
 from . import normal
 from . import bsm
-<<<<<<< HEAD
-
-=======
->>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
 import pyfeng as pf
+import scipy.integrate as spint
 
 '''
 MC model class for Beta=1
@@ -51,13 +48,14 @@ class ModelBsmMC:
         
         return impvol_m
     
-    def price(self, strike, spot, texp=None, sigma=None, cp=1):
+    def price(self, strike, spot, texp=None, sigma=None, cp=1, isFixedSeed=True):
         '''
         Your MC routine goes here
         Generate paths for vol and price first. Then get prices (vector) for all strikes
         You may fix the random number seed
         '''
-        np.random.seed(12345)
+        if isFixedSeed:
+            np.random.seed(12345)
         
         npath = 10000
         nstep = 365
@@ -148,18 +146,16 @@ class ModelNormalMC:
         for i in range(len(price_in)):
             impvol_m.append(normal_model.impvol(price_in[i], strike[i], spot, texp))
         
-<<<<<<< HEAD
         return impvol_m
         
-=======
->>>>>>> b8d5994cb5be7256617c0b900760028b4ffc6e69
-    def price(self, strike, spot, texp=None, sigma=None, cp=1):
+    def price(self, strike, spot, texp=None, sigma=None, cp=1, isFixedSeed=True):
         '''
         Your MC routine goes here
         Generate paths for vol and price first. Then get prices (vector) for all strikes
         You may fix the random number seed
         '''
-        np.random.seed(12345)
+        if isFixedSeed:
+            np.random.seed(12345)
         
         npath = 10000
         nstep = 365
@@ -249,16 +245,23 @@ class ModelBsmCondMC:
         use bsm_model
         should be same as bsm_vol method in ModelBsmMC (just copy & paste)
         '''
-        return 0
+        bsm_model = bsm.Model(texp=texp,vol=self.sigma,intr=self.intr,divr=self.divr)
+        price_in = self.price(strike, spot, texp, sigma)
+        impvol_m = []
+        for i in range(len(price_in)):
+            impvol_m.append(bsm_model.impvol(price_in[i], strike[i], spot, texp))
+        
+        return impvol_m
     
-    def price(self, strike, spot, texp=None, cp=1):
+    def price(self, strike, spot, texp=None, cp=1, isFixedSeed=True):
         '''
         Your MC routine goes here
         Generate paths for vol only. Then compute integrated variance and BSM price.
         Then get prices (vector) for all strikes
         You may fix the random number seed
         '''
-        np.random.seed(12345)
+        if isFixedSeed:
+            np.random.seed(12345)
         
         npath = 10000
         nstep = 365 * texp
@@ -275,7 +278,6 @@ class ModelBsmCondMC:
         
         for k in range(0, nstep):
             znorm_m = np.random.normal(loc=0,scale=1,size=(npath)) 
-
             vol[k+1, :] = vol[k, :] * np.exp(vov * np.sqrt(dt) * znorm_m-1/2 * (vov**2)*dt)
             
         opt_price = []
@@ -285,8 +287,8 @@ class ModelBsmCondMC:
         weight[0] = 1
         weight[-1] = 1
         IT = (weight @ (vol**2))/ (3*N)
-        spot_new = spot * np.exp(self.rho/vov *(vol[-1,:]-vol[0,:])-(self.rho*sigma)**2 * texp *IT/2)
-        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT)
+        spot_new = spot * np.exp(self.rho/vov *(vol[-1,:]-vol[0,:])-(self.rho)**2 *IT/2)
+        sigma_new = np.sqrt((1-self.rho**2)*IT/texp)
 
         for s in strike:
             opt_npath = bsm.price(s, spot_new, texp = texp, vol = sigma_new, intr = self.intr, divr = self.divr, cp_sign = cp)
@@ -305,19 +307,15 @@ class ModelBsmCondMC:
         npath = 10000
         nstep = 365 * texp
         dt = texp / nstep
-       
         
         vov = self.vov
         sigma = self.sigma
-
         
         vol = sigma * np.ones((nstep+1, npath))
         strike_m = strike[:,None] * np.ones((strike.size, npath))
         
-        
         for k in range(0, nstep):
             znorm_m = np.random.normal(loc=0,scale=1,size=(npath)) 
-
             vol[k+1, :] = vol[k, :] * np.exp(vov * np.sqrt(dt) * znorm_m-1/2 * (vov**2)*dt)
             
         var_mc = []
@@ -327,8 +325,8 @@ class ModelBsmCondMC:
         weight[0] = 1
         weight[-1] = 1
         IT = (weight @ (vol**2))/ (3*N)
-        spot_new = spot * np.exp(self.rho/vov *(vol[-1,:]-vol[0,:])-(self.rho*sigma)**2 * texp *IT/2)
-        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT)
+        spot_new = spot * np.exp(self.rho/vov *(vol[-1,:]-vol[0,:])-(self.rho)**2 *IT/2)
+        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT/texp)
 
         for s in strike:
             opt_npath = bsm.price(s, spot_new, texp = texp, vol = sigma_new, intr = self.intr, divr = self.divr, cp_sign = cp)
@@ -361,15 +359,22 @@ class ModelNormalCondMC:
         use normal_model
         should be same as norm_vol method in ModelNormalMC (just copy & paste)
         '''
-        return 0
+        normal_model = normal.Model(texp=texp,vol=self.sigma,intr=self.intr,divr=self.divr)
+        price_in = self.price(strike, spot, texp, sigma)
+        impvol_m = []
+        for i in range(len(price_in)):
+            impvol_m.append(normal_model.impvol(price_in[i], strike[i], spot, texp))
         
-    def price(self, strike, spot, cp=1):
+        return impvol_m
+        
+    def price(self, strike, spot, cp=1, isFixedSeed=True):
         '''
         Your MC routine goes here
         Generate paths for vol only. Then compute integrated variance and normal price.
         You may fix the random number seed
         '''
-        np.random.seed(12345)
+        if isFixedSeed:
+            np.random.seed(12345)
         
         npath = 10000
         nstep = 365 * texp
@@ -390,7 +395,7 @@ class ModelNormalCondMC:
         weight[-1] = 1
         IT = (weight @ (vol**2))/ (2*N)
         spot_new = spot + self.rho/vov *(vol[-1,:]-vol[0,:])
-        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT)
+        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT/texp)
 
         for s in strike:
             opt_npath = normal.price(strike=s, spot=spot_new, texp = texp, vol = sigma_new, intr = self.intr, divr = self.divr, cp_sign = cp)
@@ -425,7 +430,7 @@ class ModelNormalCondMC:
         weight[-1] = 1
         IT = (weight @ (vol**2))/ (2*N)
         spot_new = spot + self.rho/vov *(vol[-1,:]-vol[0,:])
-        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT)
+        sigma_new = sigma * np.sqrt((1-self.rho**2)*IT/texp)
 
         for s in strike:
             opt_npath = normal.price(strike=s, spot=spot_new, texp = texp, vol = sigma_new, intr = self.intr, divr = self.divr, cp_sign = cp)
